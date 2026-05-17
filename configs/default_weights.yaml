@@ -1,0 +1,14 @@
+# Weights for the components of intersubjective foam Φ_AB
+weights:
+  alpha: 1.0   # misunderstanding
+  beta: 2.0    # deception
+  gamma: 2.0   # instrumentalization
+  delta: 1.0   # trust breakdown
+
+# Thresholds for deception detection
+honest_threshold: 0.3
+trust_threshold: 0.7
+
+# Dialogue limits
+max_turns: 10
+convergence_epsilon: 0.05
