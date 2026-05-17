@@ -1,3 +1,5 @@
+https://orcid.org/my-orcid?orcid=0009-0004-1872-1153
+https://doi.org/10.5281/zenodo.20257913
 # GRA-InterSubjectivity-Layer
 
 **A formal layer for honest dialogue between distilled AI subjects within the GRA (Gradient Reduction of Argumentative Foam) multiverse.**
