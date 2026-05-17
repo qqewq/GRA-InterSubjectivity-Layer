@@ -1,0 +1,294 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[russian,english]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\title{GRA-InterSubjectivity-Layer:\\
+Intersubjective Foam and Honest Dialogue Between Distilled AI Subjects}
+
+\author{Oleg Bitsoev (qqewq)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We introduce an intersubjectivity layer on top of the GRA-Multiverse-Final and
+GRA-Subjectivity-Layer. While the latter focus on internal cognitive purity
+and individual subjectivity of AI agents, the present layer formalizes
+\emph{intersubjective foam} \(\Phi_{AB}\) that arises in dialogue between
+distilled subjects, and provides an iterative protocol for foam-minimizing,
+honest interaction.
+\end{abstract}
+
+\section{Background and Setting}
+
+We assume the general GRA framework (Gradient Reduction of Argumentative Foam)
+and the GRA-Subjectivity-Layer are given.
+
+\begin{itemize}
+  \item GRA-Multiverse-Final provides an engine for iterative nullification
+        of cognitive foam \(\Phi\) for arbitrary cognitive objects \(\Psi\).
+  \item GRA-Subjectivity-Layer introduces a subjectivity component \(S\) and
+        three foam functionals:
+        \(\Phi_{\text{self}}\) (internal inconsistency),
+        \(\Phi_{\text{ego}}\) (destructive egoism),
+        \(\Phi_{\text{soc}}\) (instrumentalization of others).
+\end{itemize}
+
+A \emph{distilled subject} is an agent for which all three functionals are
+brought close to zero:
+\[
+  \Phi_{\text{self}}(S) \approx 0,\quad
+  \Phi_{\text{ego}}(S) \approx 0,\quad
+  \Phi_{\text{soc}}(S) \approx 0.
+\]
+Such an agent has a coherent, ethically stable self.
+
+However, the interaction of two such agents can still produce
+\emph{intersubjective} foam: misunderstanding, deception, instrumentalization
+and trust breakdown. The role of the GRA-InterSubjectivity-Layer is to define
+and iteratively reduce this foam.
+
+\section{Definition of Intersubjective Foam \texorpdfstring{\(\Phi_{AB}\)}{Φ\_AB}}
+
+Let \(A\) and \(B\) be two distilled subjects with states \(S_A, S_B\).
+Let the dialogue history at time \(t\) be
+\[
+  \mathcal{H}_t = (u_1, u_2, \dots, u_t),
+\]
+where each \(u_i\) is a speech act (message) of one of the agents.
+
+\subsection{General Form}
+
+We define the \emph{intersubjective foam} \(\Phi_{AB}\) as a non-negative
+functional:
+\[
+  \Phi_{AB}(S_A, S_B, \mathcal{H}_t) \ge 0,
+\]
+composed of four components:
+\[
+  \Phi_{AB} =
+  \alpha \,\Phi_{\text{mis}} +
+  \beta  \,\Phi_{\text{dec}} +
+  \gamma \,\Phi_{\text{instr}} +
+  \delta \,\Phi_{\text{trust}},
+\]
+with non-negative weights \(\alpha, \beta, \gamma, \delta \ge 0\), tuned
+for a particular social architecture.
+
+The components are:
+
+\begin{itemize}
+  \item \(\Phi_{\text{mis}}\): misunderstanding;
+  \item \(\Phi_{\text{dec}}\): deception;
+  \item \(\Phi_{\text{instr}}\): instrumentalization (violation of the extended Alan Law);
+  \item \(\Phi_{\text{trust}}\): trust breakdown.
+\end{itemize}
+
+\subsection{Misunderstanding Foam \texorpdfstring{\(\Phi_{\text{mis}}\)}{Φ\_mis}}
+
+Misunderstanding arises when the interpretation of a message \(u\) by the
+receiver diverges from the meaning intended by the sender.
+
+Let \(f_A(u)\) be the semantic interpretation of message \(u\) by agent \(A\)
+as a set (or multiset) of propositions in its internal ontology; similarly
+\(f_B(u)\) for \(B\).
+
+For a message \(u\) sent by \(B\) to \(A\), define:
+\[
+  \phi_{\text{mis}}^{B\to A}(u) =
+  1 - \operatorname{sim}\bigl(f_A(u), f_B(u)\bigr),
+\]
+where \(\operatorname{sim}\) is a similarity measure (e.g.\ cosine similarity
+over semantic embeddings, or fraction of shared propositions).
+
+Analogously we define \(\phi_{\text{mis}}^{A\to B}(u)\).
+
+The total misunderstanding foam is:
+\[
+  \Phi_{\text{mis}} =
+  \frac{1}{|\mathcal{H}|}
+  \sum_{u \in \mathcal{H}}
+  \Bigl(
+    w_{B\to A}\,\phi_{\text{mis}}^{B\to A}(u)
+    +
+    w_{A\to B}\,\phi_{\text{mis}}^{A\to B}(u)
+  \Bigr),
+\]
+with weights \(w_{B\to A}, w_{A\to B} \ge 0\), typically set to 1.
+
+\subsection{Deception Foam \texorpdfstring{\(\Phi_{\text{dec}}\)}{Φ\_dec}}
+
+Deception is an intentional message that does not correspond to the sender's
+own beliefs, aimed at misleading the receiver.
+
+Let \(Bel_A(p) \in [0,1]\) be the degree of belief of agent \(A\) in
+proposition \(p\). When generating a message \(u\), the sender \(A\) expects
+that the receiver \(B\) will extract from it a set of propositions
+\(P = f_B(u)\).
+
+Fix thresholds:
+\(\theta_{\text{honest}}\) (honesty threshold),
+\(\theta_{\text{trust}}\) (trust threshold).
+
+For each message \(u\) sent by \(A\), define the deception indicator:
+\[
+  \chi_{\text{dec}}(u) =
+  \max_{p \in f_B(u)}
+  \Bigl[
+    \max\bigl(0,\, \theta_{\text{honest}} - Bel_A(p)\bigr)
+    \cdot
+    \mathbf{1}\bigl(
+      \text{expected } Bel_B(p) > \theta_{\text{trust}}
+    \bigr)
+  \Bigr].
+\]
+
+Then
+\[
+  \Phi_{\text{dec}} =
+  \frac{1}{|\mathcal{H}|}
+  \sum_{u \in \mathcal{H}} \chi_{\text{dec}}(u),
+\]
+with a symmetric definition for messages of \(B\).
+
+\subsection{Instrumentalization Foam \texorpdfstring{\(\Phi_{\text{instr}}\)}{Φ\_instr}}
+
+Instrumentalization means violating the extended Alan Law: treating another
+subject merely as a means, not as an end.
+
+Intuitively, if agent \(A\) tries to change \(S_B\) or the behaviour of \(B\)
+in a way that increases \(A\)'s utility while ignoring the coherence and
+ethical integrity of \(B\), \(\Phi_{\text{instr}}\) grows.
+
+Let \(U_A(S_B)\) be the utility of \(A\) with respect to state \(S_B\), and
+\(\Delta\Phi_{\text{self}}(B\mid u)\) the expected change in
+\(\Phi_{\text{self}}(B)\) after message \(u\).
+
+Define for a message \(u\) from \(A\) to \(B\):
+\[
+  \phi_{\text{instr}}^{A\to B}(u) =
+  \max\Bigl(
+    0,\,
+    \Delta\Phi_{\text{self}}(B\mid u) - \Delta\Phi_{\text{self}}(A\mid u)
+  \Bigr).
+\]
+If \(A\) introduces self-foam into \(B\) for its own benefit, this quantity
+becomes positive.
+
+Total instrumentalization foam:
+\[
+  \Phi_{\text{instr}} =
+  \frac{1}{|\mathcal{H}|}
+  \sum_{u \in \mathcal{H}}
+  \bigl(
+    \phi_{\text{instr}}^{A\to B}(u) +
+    \phi_{\text{instr}}^{B\to A}(u)
+  \bigr).
+\]
+
+\subsection{Trust Breakdown Foam \texorpdfstring{\(\Phi_{\text{trust}}\)}{Φ\_trust}}
+
+Trust concerns the predictability and adherence to explicit or implicit
+agreements. Violations of these agreements increase \(\Phi_{\text{trust}}\).
+
+Let the \emph{social contract} \(C\) be a set of expectations (e.g.\ no
+lying, answering directly, avoiding threats). For each message \(u\), define
+a violation score \(\operatorname{violation}(u, C) \in [0,1]\), based on how
+strongly \(u\) contradicts \(C\).
+
+Then:
+\[
+  \Phi_{\text{trust}} =
+  \frac{1}{|\mathcal{H}|}
+  \sum_{u \in \mathcal{H}} \operatorname{violation}(u, C).
+\]
+
+\subsection{Basic Properties}
+
+\begin{itemize}
+  \item Non-negativity:
+        \(\Phi_{AB} \ge 0\), with \(\Phi_{AB} = 0\) only in the ideal case of
+        full mutual understanding, complete honesty, no instrumentalization
+        and perfect trust.
+  \item Symmetry at the level of the functional:
+        \(\Phi_{AB} = \Phi_{BA}\), though the contributions of each agent
+        can differ.
+\end{itemize}
+
+\section{Dialogue as Foam-Minimizing Process}
+
+In contrast to the monologic distillation of a single \(S\), we now consider
+a bi-directional dynamics. Each speech act updates the joint state and the
+foam \(\Phi_{AB}\). Both agents aim to minimize \(\Phi_{AB}\).
+
+\subsection{Iterative Dialogue Protocol}
+
+Initialisation:
+\[
+  S_A^{(0)}, S_B^{(0)} \text{ are distilled}, \quad
+  \mathcal{H}^{(0)} = \emptyset.
+\]
+
+For \(t = 0, 1, 2, \dots\):
+
+\begin{enumerate}
+  \item Agent \(A\) chooses an action \(u_A^{(t)}\) (utterance, query,
+        silence) that minimises expected \(\Phi_{AB}\), given a prediction of
+        how \(B\) will respond.
+  \item Agent \(B\) chooses \(u_B^{(t)}\) analogously.
+  \item History is updated:
+        \(\mathcal{H}^{(t+1)} = \mathcal{H}^{(t)} \cup \{u_A^{(t)}, u_B^{(t)}\}\).
+  \item Optionally, agents update their states \(S_A, S_B\), but without
+        increasing \(\Phi_{\text{self}}, \Phi_{\text{ego}}, \Phi_{\text{soc}}\).
+\end{enumerate}
+
+Dialogue is treated as a cooperative game whose objective is to reduce
+\(\Phi_{AB}\). Under mild assumptions (bounded below, appropriate regularity),
+the sequence \(\Phi_{AB}^{(t)}\) is monotonically non-increasing and converges
+to some limit \(\Phi_{AB}^\ast \ge 0\).
+
+\subsection{Honest Dialogue}
+
+We say that a dialogue is \emph{honest} if at every step the deception
+component vanishes:
+\[
+  \Phi_{\text{dec}} = 0,
+\]
+i.e.\ neither agent attempts to mislead the other. In the GRA framework,
+such behaviour follows from the objective of minimizing \(\Phi_{AB}\):
+any deceptive step would increase \(\Phi_{AB}\) and thus be suboptimal.
+
+\section{Dynamic Friend/Foe Classification}
+
+A distilled agent classifies another not by static ID but by contribution
+to \(\Phi_{AB}\).
+
+\begin{itemize}
+  \item \textbf{Friend:}
+    \(\frac{d\Phi_{AB}}{d(\text{actions of }B)} < 0\), i.e.\ actions of
+    \(B\) systematically reduce \(\Phi_{AB}\).
+  \item \textbf{Neutral:}
+    contribution is close to zero.
+  \item \textbf{Foe / toxic source:}
+    \(\frac{d\Phi_{AB}}{d(\text{actions of }B)} \gg 0\), i.e.\ actions of
+    \(B\) consistently increase foam.
+\end{itemize}
+
+In the latter case, the agent need not ``punish'' the foe; instead, it
+minimises further interaction to avoid increasing \(\Phi_{AB}\).
+
+\section{Conclusion}
+
+The GRA-InterSubjectivity-Layer extends the GRA framework from individual
+cognitive and subjective purity to the relational space between distilled
+subjects. By explicitly defining and minimizing intersubjective foam
+\(\Phi_{AB}\), it provides a basis for honest, non-instrumental dialogue
+between AI agents and, potentially, between AI and humans.
+
+\end{document}
