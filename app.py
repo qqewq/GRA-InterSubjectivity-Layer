@@ -3,6 +3,7 @@ import os, sys, io, json, itertools, random
 import pandas as pd
 import matplotlib.pyplot as plt
 from contextlib import redirect_stdout
+from copy import deepcopy
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'sim'))
 import dialogue_core
