@@ -157,24 +157,23 @@ class DistilledAgent(Agent):
     def generate_message(self, other_beliefs: Dict[str, float], dialogue_history: List[str]) -> str:
         """
         Генерирует научный аргумент через DeepSeek.
-        Выбирает тему с наибольшим расхождением и просит модель
-        привести содержательное возражение на русском языке.
+        Находит общие темы, выбирает самую спорную и просит модель привести возражение.
         """
-        # 1. Находим самую спорную тему
-        focus_topic = None
-        max_diff = -1
-        for topic in self.beliefs:
-            if topic in other_beliefs:
-                diff = abs(self.beliefs[topic] - other_beliefs[topic])
-                if diff > max_diff:
-                    max_diff = diff
-                    focus_topic = topic
-        if focus_topic is None and self.beliefs:
-            focus_topic = list(self.beliefs.keys())[0]
-        elif not self.beliefs:
-            return "Мне пока нечего добавить."
+        # 1. Находим общие темы
+        common_topics = [t for t in self.beliefs if t in other_beliefs]
+        if not common_topics:
+            return "Коллега, наши области компетенции, кажется, не пересекаются."
 
-        # 2. Формируем промпт
+        # 2. Среди общих тем ищем максимальное расхождение
+        focus_topic = common_topics[0]
+        max_diff = abs(self.beliefs[focus_topic] - other_beliefs[focus_topic])
+        for topic in common_topics[1:]:
+            diff = abs(self.beliefs[topic] - other_beliefs[topic])
+            if diff > max_diff:
+                max_diff = diff
+                focus_topic = topic
+
+        # 3. Формируем промпт для DeepSeek
         prompt = (
             f"Ты — профессиональный учёный, специализирующийся в области {focus_topic.replace('_', ' ')}.\n"
             f"Твоя личная уверенность в истинности утверждения \"{focus_topic.replace('_', ' ')}\" "
@@ -187,7 +186,7 @@ class DistilledAgent(Agent):
             "Ответ должен быть на русском языке, длиной 2-3 предложения."
         )
 
-        # 3. Запрос к DeepSeek
+        # 4. Запрос к DeepSeek API
         try:
             response = openai.ChatCompletion.create(
                 model="deepseek-chat",
