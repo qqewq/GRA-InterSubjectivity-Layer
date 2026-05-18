@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from contextlib import redirect_stdout
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'sim'))
+import dialogue_core
 from dialogue_core import SubjectivityProfile, DistilledAgent, simulate_advanced, Agent
 
 # ---------------- Настройки страницы ----------------
