@@ -1,0 +1,12 @@
+{
+  "agent_name": "Andrey_Math",
+  "subjectivity_profile": {
+    "initial_beliefs": {"Riemann_Hypothesis": 0.9, "P_vs_NP": 0.95, "Dark_Matter": 0.8, "Multiverse": 0.2},
+    "openness": 0.2,
+    "empathy": 0.6,
+    "learning_rate": 0.3,
+    "meta_preference": 0.4,
+    "trust_violations": [],
+    "final_emotion": "skeptical"
+  }
+}

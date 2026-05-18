@@ -1,0 +1,22 @@
+{
+  "agent_name": "Alice_Math",
+  "subjectivity_profile": {
+    "initial_beliefs": {
+      "Riemann_Hypothesis": 0.85,
+      "P_vs_NP": 0.95,
+      "Goldbach_Conjecture": 0.9,
+      "Twin_Prime_Conjecture": 0.8,
+      "ABC_Conjecture": 0.5
+    },
+    "openness": 0.2,
+    "empathy": 0.6,
+    "learning_rate": 0.3,
+    "meta_preference": 0.4,
+    "trust_violations": [],
+    "final_emotion": "skeptical"
+  },
+  "dialogue_metrics": {
+    "convergence_rate": 0.0,
+    "final_phi": 0.0
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "agent_name": "Sergey_Bio",
+  "subjectivity_profile": {
+    "initial_beliefs": {"Riemann_Hypothesis": 0.1, "P_vs_NP": 0.2, "Dark_Matter": 0.3, "Multiverse": 0.7},
+    "openness": 0.6,
+    "empathy": 0.3,
+    "learning_rate": 0.4,
+    "meta_preference": 0.1,
+    "trust_violations": [],
+    "final_emotion": "enthusiastic"
+  }
+}

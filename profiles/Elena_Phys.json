@@ -1,0 +1,12 @@
+{
+  "agent_name": "Elena_Phys",
+  "subjectivity_profile": {
+    "initial_beliefs": {"Riemann_Hypothesis": 0.5, "P_vs_NP": 0.4, "Dark_Matter": 0.95, "Multiverse": 0.6},
+    "openness": 0.4,
+    "empathy": 0.5,
+    "learning_rate": 0.5,
+    "meta_preference": 0.2,
+    "trust_violations": [],
+    "final_emotion": "curious"
+  }
+}
