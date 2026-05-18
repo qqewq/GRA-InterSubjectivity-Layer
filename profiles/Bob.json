@@ -1,0 +1,20 @@
+{
+  "agent_name": "Bob",
+  "subjectivity_profile": {
+    "initial_beliefs": {
+      "rain": 0.1,
+      "quantum_weird": 0.8,
+      "climate_change": 0.9
+    },
+    "openness": 0.7,
+    "empathy": 0.3,
+    "learning_rate": 0.8,
+    "meta_preference": 0.15,
+    "trust_violations": ["minor_deception"],
+    "final_emotion": "curious"
+  },
+  "dialogue_metrics": {
+    "convergence_rate": 0.58,
+    "final_phi": 0.63
+  }
+}

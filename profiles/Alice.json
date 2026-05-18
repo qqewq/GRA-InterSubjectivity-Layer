@@ -1,0 +1,20 @@
+{
+  "agent_name": "Alice",
+  "subjectivity_profile": {
+    "initial_beliefs": {
+      "rain": 0.9,
+      "quantum_weird": 0.2,
+      "climate_change": 0.95
+    },
+    "openness": 0.2,
+    "empathy": 0.85,
+    "learning_rate": 0.3,
+    "meta_preference": 0.6,
+    "trust_violations": [],
+    "final_emotion": "cautious"
+  },
+  "dialogue_metrics": {
+    "convergence_rate": 0.42,
+    "final_phi": 0.87
+  }
+}
