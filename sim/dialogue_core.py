@@ -2,7 +2,7 @@
 """
 GRA InterSubjectivity Dialogue Core
 - базовые функции расчёта пены (Φ_mis, Φ_dec, Φ_instr, Φ_trust)
-- класс Agent
+- класс Agent с экспертным генератором сообщений
 - класс SubjectivityProfile для загрузки асимметричных профилей
 - класс DistilledAgent с когнитивными параметрами
 - стандартная и расширенная симуляции
@@ -29,22 +29,80 @@ class Agent:
         self.history = []
 
     def generate_message(self, other_beliefs: Dict[str, float], dialogue_history: List[str]) -> str:
-        """Генерирует простое утверждение на основе разницы убеждений."""
-        msg = f"My beliefs: {self.beliefs}"
-        return msg
+        """
+        Генерирует экспертное высказывание на основе своих убеждений.
+        Преобразует вероятности в словесные оценки и подчёркивает расхождения.
+        """
+        # Если убеждений нет, возвращаем нейтральное сообщение
+        if not self.beliefs:
+            return "У меня пока нет сформированных убеждений."
+
+        statements = []
+        for topic, prob in self.beliefs.items():
+            # Определяем словесную оценку уверенности
+            if prob > 0.9:
+                confidence = "абсолютно уверен"
+            elif prob > 0.7:
+                confidence = "практически уверен"
+            elif prob > 0.5:
+                confidence = "склоняюсь к тому, что"
+            elif prob > 0.3:
+                confidence = "сомневаюсь, но допускаю"
+            else:
+                confidence = "считаю маловероятным"
+
+            # Преобразуем ключ в читаемый вид (заменяем подчёркивания на пробелы)
+            human_topic = topic.replace("_", " ")
+            statement = f"Я {confidence}, что {human_topic} (вероятность {prob:.2f})"
+            statements.append(statement)
+
+        # Находим самые сильные расхождения с собеседником (если есть данные)
+        if other_beliefs:
+            differences = []
+            for topic in self.beliefs:
+                if topic in other_beliefs:
+                    diff = abs(self.beliefs[topic] - other_beliefs[topic])
+                    differences.append((topic, diff))
+            differences.sort(key=lambda x: x[1], reverse=True)
+            # Выбираем до двух тем с расхождением > 0.15
+            focus_topics = [t for t, d in differences[:2] if d > 0.15]
+            if focus_topics:
+                topic_name = focus_topics[0].replace("_", " ")
+                my_val = self.beliefs[focus_topics[0]]
+                other_val = other_beliefs[focus_topics[0]]
+                msg = (f"Коллега, хочу обратить внимание на {topic_name}. "
+                       f"Моя оценка: {my_val:.2f}, у вас – {other_val:.2f}. "
+                       f"Мои аргументы основаны на последних публикациях.")
+                return msg
+
+        # Если сильных расхождений нет, делимся несколькими своими оценками
+        return "Позвольте поделиться моими текущими оценками: " + "; ".join(statements[:3])
 
     def interpret(self, message: str) -> Dict[str, float]:
-        """Парсит сообщение, извлекая убеждения собеседника."""
+        """Парсит сообщение, пытаясь извлечь убеждения собеседника."""
+        # Пытаемся извлечь словарь из старого формата "My beliefs: ..."
         try:
-            # формат "My beliefs: {'rain': 0.9, ...}"
-            dict_str = message.split(": ", 1)[1]
-            # Преобразуем строку в словарь (безопасный eval)
-            interp = eval(dict_str)
-            if isinstance(interp, dict):
-                return interp
+            if "My beliefs:" in message:
+                dict_str = message.split(": ", 1)[1]
+                interp = eval(dict_str)
+                if isinstance(interp, dict):
+                    return interp
         except:
             pass
-        # fallback
+
+        # Новый экспертный формат: ищем числа после фразы "вероятность X.XX"
+        import re
+        extracted = {}
+        for topic in self.beliefs:
+            human_topic = topic.replace("_", " ")
+            # Ищем упоминание темы и число рядом
+            pattern = rf'{re.escape(human_topic)}.*?(\d+\.\d+)'
+            match = re.search(pattern, message)
+            if match:
+                extracted[topic] = float(match.group(1))
+        if extracted:
+            return extracted
+        # Если ничего не нашли, возвращаем нейтральное значение 0.5
         return {k: 0.5 for k in self.beliefs}
 
     def __repr__(self):
