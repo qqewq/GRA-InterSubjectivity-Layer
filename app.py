@@ -14,7 +14,7 @@ st.title("🌀 GRA InterSubjectivity Layer – Лаборатория диало
 
 # ---------------- Инициализация сессионных данных ----------------
 if 'profiles' not in st.session_state:
-    st.session_state.profiles = {}  # {имя: профиль SubjectivityProfile}
+    st.session_state.profiles = {}  # {имя: SubjectivityProfile}
 if 'custom_agents' not in st.session_state:
     st.session_state.custom_agents = {}  # {имя: DistilledAgent или Agent}
 if 'log' not in st.session_state:
@@ -47,42 +47,38 @@ def get_all_agents():
 def run_dialogue(agent1, agent2, turns):
     """Запускает диалог, возвращает лог и историю пены."""
     f = io.StringIO()
-    phi_series = []  # будет сохранять кортежи (turn, phi_mis, phi_dec, phi_instr, phi_trust)
-    # Переопределяем simulate_advanced, чтобы перехватывать вывод и собирать пену
-    # К сожалению, проще написать здесь кастомный цикл, использующий те же функции,
-    # или модифицировать simulate_advanced. Для простоты перехватим stdout и распарсим.
-    with redirect_stdout(f):
-        # Кастомный цикл, чтобы вытащить пену
-        history = []
-        for turn in range(turns):
-            sender, receiver = (agent1, agent2) if turn % 2 == 0 else (agent2, agent1)
-            msg = sender.generate_message(receiver.beliefs, history)
-            phi_m = dialogue_core.phi_mis(sender, receiver, msg, turn % 2 == 0)
-            phi_d = dialogue_core.phi_dec(sender, receiver, msg, turn % 2 == 0)
-            phi_i = dialogue_core.phi_instr(sender, receiver, msg, turn % 2 == 0)
-            phi_t = dialogue_core.phi_trust(sender, receiver, msg, turn % 2 == 0, history)
-            total = phi_m + phi_d + phi_i + phi_t
-            phi_series.append((turn+1, phi_m, phi_d, phi_i, phi_t, total))
-            if isinstance(receiver, DistilledAgent):
-                receiver.update_beliefs(sender.beliefs)
-            if isinstance(sender, DistilledAgent) and sender.decide_to_meta_reason(history):
-                history.append(f"[META] {sender.name} reflects on the dialogue patterns.")
-            history.append(f"{sender.name}: {msg}")
-            print(f"Turn {turn+1}: {sender.name} -> {receiver.name}: {msg}")
-            print(f"  Φ_mis={phi_m:.3f}, Φ_dec={phi_d:.3f}, Φ_instr={phi_i:.3f}, Φ_trust={phi_t:.3f} | Total Φ={total:.3f}")
+    phi_series = []
+    # Кастомный цикл, чтобы вытащить пену
+    history = []
+    for turn in range(turns):
+        sender, receiver = (agent1, agent2) if turn % 2 == 0 else (agent2, agent1)
+        msg = sender.generate_message(receiver.beliefs, history)
+        phi_m = dialogue_core.phi_mis(sender, receiver, msg, turn % 2 == 0)
+        phi_d = dialogue_core.phi_dec(sender, receiver, msg, turn % 2 == 0)
+        phi_i = dialogue_core.phi_instr(sender, receiver, msg, turn % 2 == 0)
+        phi_t = dialogue_core.phi_trust(sender, receiver, msg, turn % 2 == 0, history)
+        total = phi_m + phi_d + phi_i + phi_t
+        phi_series.append((turn+1, phi_m, phi_d, phi_i, phi_t, total))
+        if isinstance(receiver, DistilledAgent):
+            receiver.update_beliefs(sender.beliefs)
+        if isinstance(sender, DistilledAgent) and sender.decide_to_meta_reason(history):
+            history.append(f"[META] {sender.name} reflects on the dialogue patterns.")
+        history.append(f"{sender.name}: {msg}")
+        # Вывод в лог
+        f.write(f"Turn {turn+1}: {sender.name} -> {receiver.name}: {msg}\n")
+        f.write(f"  Φ_mis={phi_m:.3f}, Φ_dec={phi_d:.3f}, Φ_instr={phi_i:.3f}, Φ_trust={phi_t:.3f} | Total Φ={total:.3f}\n")
     log = f.getvalue()
     return log, phi_series
 
-# ---------------- Интерфейс: сайдбар для загрузки и ручного создания ----------------
+# ---------------- Интерфейс: сайдбар --------------------
 with st.sidebar:
     st.header("⚙️ Управление агентами")
-    # Загрузка профиля из JSON-файла
+
+    # ----- Загрузка профиля из файла -----
     uploaded_file = st.file_uploader("📤 Загрузить профиль (.json)", type="json")
     if uploaded_file is not None:
         try:
             data = json.load(uploaded_file)
-            profile = SubjectivityProfile.from_json(uploaded_file.name)  # не очень корректно, но загрузим вручную
-            # Проще вручную распарсить, т.к. from_json ожидает путь
             sp = data["subjectivity_profile"]
             metrics = data.get("dialogue_metrics", {})
             profile = SubjectivityProfile(
@@ -128,6 +124,76 @@ with st.sidebar:
                 st.success(f"Агент '{name}' добавлен!")
             except Exception as e:
                 st.error(f"Ошибка: {e}")
+
+    # ----- Редактирование и удаление существующих агентов -----
+    st.markdown("---")
+    st.subheader("📋 Редактировать агента")
+    all_agent_names = list(st.session_state.profiles.keys()) + list(st.session_state.custom_agents.keys())
+    if not all_agent_names:
+        st.info("Пока нет ни одного агента.")
+    else:
+        selected_agent = st.selectbox("Выберите агента", all_agent_names)
+        if selected_agent:
+            # Определяем источник данных
+            if selected_agent in st.session_state.profiles:
+                prof = st.session_state.profiles[selected_agent]
+                is_profile = True
+                agent_type = "DistilledAgent (из профиля)"
+                current_beliefs = json.dumps(prof.initial_beliefs, indent=2, ensure_ascii=False)
+                current_openness = prof.openness
+                current_empathy = prof.empathy
+                current_lr = prof.learning_rate
+                current_meta = prof.meta_preference
+            else:
+                agent = st.session_state.custom_agents[selected_agent]
+                is_profile = False
+                agent_type = "Обычный Agent (вручную)"
+                current_beliefs = json.dumps(agent.beliefs, indent=2, ensure_ascii=False)
+                # У обычного агента нет таких параметров, ставим значения по умолчанию
+                current_openness = 0.3
+                current_empathy = 0.5
+                current_lr = 0.5
+                current_meta = 0.1
+
+            st.write(f"**Тип:** {agent_type}")
+            # Редактирование убеждений
+            new_beliefs_str = st.text_area("Убеждения (JSON)", value=current_beliefs, height=150, key=f"edit_beliefs_{selected_agent}")
+            # Ползунки для когнитивных параметров (только если профиль)
+            if is_profile:
+                new_openness = st.slider("Открытость", 0.0, 1.0, current_openness, key=f"edit_openness_{selected_agent}")
+                new_empathy = st.slider("Эмпатия", 0.0, 1.0, current_empathy, key=f"edit_empathy_{selected_agent}")
+                new_lr = st.slider("Скорость обучения", 0.0, 1.0, current_lr, key=f"edit_lr_{selected_agent}")
+                new_meta = st.slider("Мета-рассуждения", 0.0, 1.0, current_meta, key=f"edit_meta_{selected_agent}")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("💾 Сохранить изменения", key=f"save_{selected_agent}"):
+                    try:
+                        new_beliefs = json.loads(new_beliefs_str)
+                        if is_profile:
+                            # Обновляем профиль
+                            prof.initial_beliefs = new_beliefs
+                            prof.openness = new_openness
+                            prof.empathy = new_empathy
+                            prof.learning_rate = new_lr
+                            prof.meta_preference = new_meta
+                            # Пересоздаём DistilledAgent в custom_agents не хранится, он генерируется на лету
+                            st.success(f"Профиль '{selected_agent}' обновлён!")
+                        else:
+                            # Обновляем обычного агента
+                            agent = st.session_state.custom_agents[selected_agent]
+                            agent.beliefs = new_beliefs
+                            st.success(f"Агент '{selected_agent}' обновлён!")
+                    except Exception as e:
+                        st.error(f"Ошибка: {e}")
+            with col2:
+                if st.button("🗑 Удалить агента", key=f"delete_{selected_agent}"):
+                    if is_profile:
+                        del st.session_state.profiles[selected_agent]
+                    else:
+                        del st.session_state.custom_agents[selected_agent]
+                    st.success(f"Агент '{selected_agent}' удалён!")
+                    st.experimental_rerun()
 
 # ---------------- Основная рабочая область: три вкладки ----------------
 tab1, tab2, tab3 = st.tabs(["🎭 Диалог", "📊 Наблюдатель", "📈 Аналитика"])
@@ -186,26 +252,22 @@ with tab2:
         turns_obs = st.slider("Раундов на диалог", 2, 10, 4, key="obs_turns")
         if st.button("🔍 Запустить наблюдение", key="run_observer"):
             names = list(all_agents.keys())
-            pairs = list(itertools.permutations(names, 2))  # все направленные пары
+            pairs = list(itertools.permutations(names, 2))
             results = []
             progress = st.progress(0)
             for i, (name_a, name_b) in enumerate(pairs):
-                agent_a = all_agents[name_a]
+                # Создаём свежих агентов из профилей/кастомных
+                agent_a = all_agents[name_a]  # get_all_agents уже возвращает новых
                 agent_b = all_agents[name_b]
-                # сбрасываем убеждения, чтобы каждый диалог начинался с исходных
-                # (воссоздаём агентов заново)
+                # Сбрасываем историю и убеждения до исходных, если нужно
                 if name_a in st.session_state.profiles:
                     agent_a = DistilledAgent(st.session_state.profiles[name_a])
-                elif name_a in st.session_state.custom_agents:
-                    agent_a = st.session_state.custom_agents[name_a]
                 else:
-                    agent_a = DistilledAgent(st.session_state.profiles[name_a])
+                    agent_a = st.session_state.custom_agents[name_a]
                 if name_b in st.session_state.profiles:
                     agent_b = DistilledAgent(st.session_state.profiles[name_b])
-                elif name_b in st.session_state.custom_agents:
-                    agent_b = st.session_state.custom_agents[name_b]
                 else:
-                    agent_b = DistilledAgent(st.session_state.profiles[name_b])
+                    agent_b = st.session_state.custom_agents[name_b]
                 log, phi_hist = run_dialogue(agent_a, agent_b, turns_obs)
                 final_phi = phi_hist[-1][-1] if phi_hist else 0.0
                 results.append({
@@ -227,14 +289,13 @@ with tab2:
             ax2.set_xlabel("Φ")
             ax2.set_ylabel("Число пар")
             st.pyplot(fig2)
-            # Возможность посмотреть детали пары
             selected_pair = st.selectbox("Выберите пару для деталей", df["Пара"].tolist())
             if selected_pair:
                 row = df[df["Пара"] == selected_pair].iloc[0]
                 st.write("**Финальные убеждения A:**", row["Убеждения A"])
                 st.write("**Финальные убеждения B:**", row["Убеждения B"])
 
-# ===== Вкладка 3: Сравнительная аналитика (опционально) =====
+# ===== Вкладка 3: Сравнительная аналитика =====
 with tab3:
     st.header("📈 Сравнительная аналитика")
     if 'observer_results' in st.session_state and st.session_state.observer_results:
